@@ -19,11 +19,9 @@ RUN pnpm install --frozen-lockfile
 # Copy source
 COPY apps/api/ ./apps/api/
 
-# Build
-RUN pnpm --filter @repo/api build
-
-# Prune dev dependencies
-RUN pnpm prune --prod
+# Build and prune dev dependencies
+RUN pnpm --filter @repo/api build \
+    && pnpm prune --prod
 
 # Runtime stage
 FROM node:22.13-alpine3.21 AS runtime
