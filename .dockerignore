@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.env*
+!**/.env.example
+**/*.log
+.git
+.gitignore
+.turbo
+**/coverage
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+**/Dockerfile
+**/.dockerignore
+README.md
+architecture.md
