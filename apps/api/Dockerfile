@@ -28,6 +28,12 @@ RUN pnpm prune --prod
 # Runtime stage
 FROM node:22.13-alpine3.21 AS runtime
 
+LABEL org.opencontainers.image.title="Uberclone API" \
+      org.opencontainers.image.description="Backend API service for Uberclone" \
+      org.opencontainers.image.vendor="Uberclone" \
+      org.opencontainers.image.source="https://github.com/your-org/uberclone" \
+      org.opencontainers.image.licenses="MIT"
+
 # Security: run as non-root user
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 hono
