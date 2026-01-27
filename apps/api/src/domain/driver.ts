@@ -47,3 +47,13 @@ export const goOffline = (driver: Driver): DriverOperationResult => {
     },
   };
 };
+
+export const goOnline = (driver: Driver): DriverOperationResult => {
+  return {
+    success: true,
+    driver: {
+      ...driver,
+      status: "available",
+    },
+  };
+};
