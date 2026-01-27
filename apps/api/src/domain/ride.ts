@@ -78,6 +78,13 @@ export const startPickup = (ride: Ride): RideOperationResult => {
 };
 
 export const startRide = (ride: Ride): RideOperationResult => {
+  if (ride.status !== "driver_en_route") {
+    return {
+      success: false,
+      error: "Cannot start a ride that is not en route to pickup",
+    };
+  }
+
   return {
     success: true,
     ride: {
