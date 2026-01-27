@@ -1,6 +1,6 @@
 import type { Location } from "./location.js";
 
-export type RideStatus = "requested" | "driver_assigned";
+export type RideStatus = "requested" | "driver_assigned" | "driver_en_route";
 
 export type Ride = {
   readonly id: string;
@@ -17,14 +17,14 @@ type CreateRideInput = {
   readonly dropoff: Location;
 };
 
-type CreateRideSuccess = {
+type RideOperationSuccess = {
   readonly success: true;
   readonly ride: Ride;
 };
 
-type CreateRideResult = CreateRideSuccess;
+type RideOperationResult = RideOperationSuccess;
 
-export const createRide = (input: CreateRideInput): CreateRideResult => {
+export const createRide = (input: CreateRideInput): RideOperationResult => {
   return {
     success: true,
     ride: {
@@ -37,20 +37,23 @@ export const createRide = (input: CreateRideInput): CreateRideResult => {
   };
 };
 
-type AssignDriverSuccess = {
-  readonly success: true;
-  readonly ride: Ride;
-};
-
-type AssignDriverResult = AssignDriverSuccess;
-
-export const assignDriver = (ride: Ride, driverId: string): AssignDriverResult => {
+export const assignDriver = (ride: Ride, driverId: string): RideOperationResult => {
   return {
     success: true,
     ride: {
       ...ride,
       status: "driver_assigned",
       driverId,
+    },
+  };
+};
+
+export const startPickup = (ride: Ride): RideOperationResult => {
+  return {
+    success: true,
+    ride: {
+      ...ride,
+      status: "driver_en_route",
     },
   };
 };
