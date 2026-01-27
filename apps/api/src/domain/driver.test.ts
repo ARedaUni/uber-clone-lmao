@@ -145,5 +145,18 @@ describe("Driver", () => {
         expect(result.error).toBe("Cannot go offline while on a ride");
       }
     });
+
+    it("cannot complete ride if driver is not busy", () => {
+      const location = createValidLocation(37.7749, -122.4194);
+      const createResult = createDriver({ name: "John Doe", location });
+      if (!createResult.success) throw new Error("Failed to create driver");
+
+      const result = completeRide(createResult.driver);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Cannot complete ride when driver is not on a ride");
+      }
+    });
   });
 });

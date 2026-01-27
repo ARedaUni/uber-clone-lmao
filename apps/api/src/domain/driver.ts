@@ -85,6 +85,13 @@ export const assignToRide = (driver: Driver, rideId: string): DriverOperationRes
 };
 
 export const completeRide = (driver: Driver): DriverOperationResult => {
+  if (driver.status !== "busy") {
+    return {
+      success: false,
+      error: "Cannot complete ride when driver is not on a ride",
+    };
+  }
+
   const { currentRideId: _, ...rest } = driver;
   return {
     success: true,
