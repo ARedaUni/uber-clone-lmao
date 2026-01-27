@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDriver, goOffline, goOnline, assignToRide } from "./driver.js";
+import { createDriver, goOffline, goOnline, assignToRide, completeRide } from "./driver.js";
 import { createValidLocation } from "./test-factories.js";
 
 describe("Driver", () => {
@@ -77,6 +77,24 @@ describe("Driver", () => {
       if (result.success) {
         expect(result.driver.status).toBe("busy");
         expect(result.driver.currentRideId).toBe("ride-123");
+      }
+    });
+  });
+
+  describe("completeRide", () => {
+    it("transitions a busy driver to available status and clears currentRideId", () => {
+      const location = createValidLocation(37.7749, -122.4194);
+      const createResult = createDriver({ name: "John Doe", location });
+      if (!createResult.success) throw new Error("Failed to create driver");
+      const assignedResult = assignToRide(createResult.driver, "ride-123");
+      if (!assignedResult.success) throw new Error("Failed to assign to ride");
+
+      const result = completeRide(assignedResult.driver);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.driver.status).toBe("available");
+        expect(result.driver.currentRideId).toBeUndefined();
       }
     });
   });

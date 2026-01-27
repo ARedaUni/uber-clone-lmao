@@ -69,3 +69,14 @@ export const assignToRide = (driver: Driver, rideId: string): DriverOperationRes
     },
   };
 };
+
+export const completeRide = (driver: Driver): DriverOperationResult => {
+  const { currentRideId: _, ...rest } = driver;
+  return {
+    success: true,
+    driver: {
+      ...rest,
+      status: "available",
+    },
+  };
+};
