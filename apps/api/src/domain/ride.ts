@@ -112,6 +112,13 @@ export const completeRide = (ride: Ride): RideOperationResult => {
 };
 
 export const cancelRide = (ride: Ride): RideOperationResult => {
+  if (ride.status === "completed" || ride.status === "cancelled") {
+    return {
+      success: false,
+      error: "Cannot cancel a ride that is already completed or cancelled",
+    };
+  }
+
   return {
     success: true,
     ride: {
