@@ -114,4 +114,21 @@ describe("Driver", () => {
       }
     });
   });
+
+  describe("invalid state transitions", () => {
+    it("cannot assign to ride if driver is offline", () => {
+      const location = createValidLocation(37.7749, -122.4194);
+      const createResult = createDriver({ name: "John Doe", location });
+      if (!createResult.success) throw new Error("Failed to create driver");
+      const offlineResult = goOffline(createResult.driver);
+      if (!offlineResult.success) throw new Error("Failed to go offline");
+
+      const result = assignToRide(offlineResult.driver, "ride-123");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Cannot assign ride to a driver that is not available");
+      }
+    });
+  });
 });

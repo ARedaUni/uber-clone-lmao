@@ -60,6 +60,13 @@ export const goOnline = (driver: Driver): DriverOperationResult => {
 };
 
 export const assignToRide = (driver: Driver, rideId: string): DriverOperationResult => {
+  if (driver.status !== "available") {
+    return {
+      success: false,
+      error: "Cannot assign ride to a driver that is not available",
+    };
+  }
+
   return {
     success: true,
     driver: {
