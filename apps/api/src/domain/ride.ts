@@ -1,6 +1,6 @@
 import type { Location } from "./location.js";
 
-export type RideStatus = "requested" | "driver_assigned" | "driver_en_route" | "in_progress";
+export type RideStatus = "requested" | "driver_assigned" | "driver_en_route" | "in_progress" | "completed";
 
 export type Ride = {
   readonly id: string;
@@ -64,6 +64,16 @@ export const startRide = (ride: Ride): RideOperationResult => {
     ride: {
       ...ride,
       status: "in_progress",
+    },
+  };
+};
+
+export const completeRide = (ride: Ride): RideOperationResult => {
+  return {
+    success: true,
+    ride: {
+      ...ride,
+      status: "completed",
     },
   };
 };

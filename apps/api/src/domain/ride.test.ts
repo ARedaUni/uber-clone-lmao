@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRide, assignDriver, startPickup, startRide } from "./ride.js";
+import { createRide, assignDriver, startPickup, startRide, completeRide } from "./ride.js";
 import { createLocation } from "./location.js";
 
 describe("Ride", () => {
@@ -154,6 +154,49 @@ describe("Ride", () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.ride.status).toBe("in_progress");
+      }
+    });
+  });
+
+  describe("completeRide", () => {
+    it("transitions an in_progress ride to completed status", () => {
+      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
+      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+
+      if (!pickupResult.success || !dropoffResult.success) {
+        throw new Error("Invalid test locations");
+      }
+
+      const rideResult = createRide({
+        riderId: "rider-123",
+        pickup: pickupResult.location,
+        dropoff: dropoffResult.location,
+      });
+
+      if (!rideResult.success) {
+        throw new Error("Failed to create ride");
+      }
+
+      const assignedResult = assignDriver(rideResult.ride, "driver-456");
+      if (!assignedResult.success) {
+        throw new Error("Failed to assign driver");
+      }
+
+      const enRouteResult = startPickup(assignedResult.ride);
+      if (!enRouteResult.success) {
+        throw new Error("Failed to start pickup");
+      }
+
+      const inProgressResult = startRide(enRouteResult.ride);
+      if (!inProgressResult.success) {
+        throw new Error("Failed to start ride");
+      }
+
+      const result = completeRide(inProgressResult.ride);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.ride.status).toBe("completed");
       }
     });
   });
