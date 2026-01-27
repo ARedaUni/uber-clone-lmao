@@ -130,5 +130,20 @@ describe("Driver", () => {
         expect(result.error).toBe("Cannot assign ride to a driver that is not available");
       }
     });
+
+    it("cannot go offline if driver is busy", () => {
+      const location = createValidLocation(37.7749, -122.4194);
+      const createResult = createDriver({ name: "John Doe", location });
+      if (!createResult.success) throw new Error("Failed to create driver");
+      const assignedResult = assignToRide(createResult.driver, "ride-123");
+      if (!assignedResult.success) throw new Error("Failed to assign to ride");
+
+      const result = goOffline(assignedResult.driver);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Cannot go offline while on a ride");
+      }
+    });
   });
 });

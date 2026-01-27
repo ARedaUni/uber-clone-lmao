@@ -40,6 +40,13 @@ export const createDriver = (input: CreateDriverInput): DriverOperationResult =>
 };
 
 export const goOffline = (driver: Driver): DriverOperationResult => {
+  if (driver.status === "busy") {
+    return {
+      success: false,
+      error: "Cannot go offline while on a ride",
+    };
+  }
+
   return {
     success: true,
     driver: {
