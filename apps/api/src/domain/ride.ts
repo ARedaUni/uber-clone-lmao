@@ -43,6 +43,13 @@ export const createRide = (input: CreateRideInput): RideOperationResult => {
 };
 
 export const assignDriver = (ride: Ride, driverId: string): RideOperationResult => {
+  if (ride.status !== "requested") {
+    return {
+      success: false,
+      error: "Cannot assign driver to a ride that is not requested",
+    };
+  }
+
   return {
     success: true,
     ride: {

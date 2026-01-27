@@ -255,5 +255,46 @@ describe("Ride", () => {
         expect(result.error).toBe("Cannot complete a ride that is not in progress");
       }
     });
+
+    it("cannot assign a driver to a ride that is already in progress", () => {
+      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
+      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+
+      if (!pickupResult.success || !dropoffResult.success) {
+        throw new Error("Invalid test locations");
+      }
+
+      const rideResult = createRide({
+        riderId: "rider-123",
+        pickup: pickupResult.location,
+        dropoff: dropoffResult.location,
+      });
+
+      if (!rideResult.success) {
+        throw new Error("Failed to create ride");
+      }
+
+      const assignedResult = assignDriver(rideResult.ride, "driver-456");
+      if (!assignedResult.success) {
+        throw new Error("Failed to assign driver");
+      }
+
+      const enRouteResult = startPickup(assignedResult.ride);
+      if (!enRouteResult.success) {
+        throw new Error("Failed to start pickup");
+      }
+
+      const inProgressResult = startRide(enRouteResult.ride);
+      if (!inProgressResult.success) {
+        throw new Error("Failed to start ride");
+      }
+
+      const result = assignDriver(inProgressResult.ride, "driver-789");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Cannot assign driver to a ride that is not requested");
+      }
+    });
   });
 });
