@@ -1,82 +1,39 @@
 import { describe, it, expect } from "vitest";
 import { createRide, assignDriver, startPickup, startRide, completeRide, cancelRide } from "./ride.js";
-import { createLocation } from "./location.js";
+import { createTestRide, createRideInState, createValidLocation } from "./test-factories.js";
 
 describe("Ride", () => {
   describe("createRide", () => {
     it("creates a ride with pickup and dropoff locations in requested status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const pickup = createValidLocation(37.7749, -122.4194);
+      const dropoff = createValidLocation(34.0522, -118.2437);
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const result = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
+      const result = createRide({ riderId: "rider-123", pickup, dropoff });
 
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.ride.riderId).toBe("rider-123");
-        expect(result.ride.pickup).toEqual(pickupResult.location);
-        expect(result.ride.dropoff).toEqual(dropoffResult.location);
+        expect(result.ride.pickup).toEqual(pickup);
+        expect(result.ride.dropoff).toEqual(dropoff);
         expect(result.ride.status).toBe("requested");
       }
     });
 
     it("generates a unique id for each ride", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride1 = createTestRide();
+      const ride2 = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const result1 = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      const result2 = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!result1.success || !result2.success) {
-        throw new Error("Failed to create rides");
-      }
-
-      expect(result1.ride.id).toBeDefined();
-      expect(result2.ride.id).toBeDefined();
-      expect(result1.ride.id).not.toBe(result2.ride.id);
+      expect(ride1.id).toBeDefined();
+      expect(ride2.id).toBeDefined();
+      expect(ride1.id).not.toBe(ride2.id);
     });
   });
 
   describe("assignDriver", () => {
     it("transitions a requested ride to driver_assigned status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const result = assignDriver(rideResult.ride, "driver-456");
+      const result = assignDriver(ride, "driver-456");
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -88,30 +45,9 @@ describe("Ride", () => {
 
   describe("startPickup", () => {
     it("transitions a driver_assigned ride to driver_en_route status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createRideInState("driver_assigned");
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const assignedResult = assignDriver(rideResult.ride, "driver-456");
-
-      if (!assignedResult.success) {
-        throw new Error("Failed to assign driver");
-      }
-
-      const result = startPickup(assignedResult.ride);
+      const result = startPickup(ride);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -122,34 +58,9 @@ describe("Ride", () => {
 
   describe("startRide", () => {
     it("transitions a driver_en_route ride to in_progress status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createRideInState("driver_en_route");
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const assignedResult = assignDriver(rideResult.ride, "driver-456");
-      if (!assignedResult.success) {
-        throw new Error("Failed to assign driver");
-      }
-
-      const enRouteResult = startPickup(assignedResult.ride);
-      if (!enRouteResult.success) {
-        throw new Error("Failed to start pickup");
-      }
-
-      const result = startRide(enRouteResult.ride);
+      const result = startRide(ride);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -160,39 +71,9 @@ describe("Ride", () => {
 
   describe("completeRide", () => {
     it("transitions an in_progress ride to completed status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createRideInState("in_progress");
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const assignedResult = assignDriver(rideResult.ride, "driver-456");
-      if (!assignedResult.success) {
-        throw new Error("Failed to assign driver");
-      }
-
-      const enRouteResult = startPickup(assignedResult.ride);
-      if (!enRouteResult.success) {
-        throw new Error("Failed to start pickup");
-      }
-
-      const inProgressResult = startRide(enRouteResult.ride);
-      if (!inProgressResult.success) {
-        throw new Error("Failed to start ride");
-      }
-
-      const result = completeRide(inProgressResult.ride);
+      const result = completeRide(ride);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -203,24 +84,9 @@ describe("Ride", () => {
 
   describe("cancelRide", () => {
     it("transitions a requested ride to cancelled status", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const result = cancelRide(rideResult.ride);
+      const result = cancelRide(ride);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -231,24 +97,9 @@ describe("Ride", () => {
 
   describe("invalid state transitions", () => {
     it("cannot complete a ride that is still requested", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const result = completeRide(rideResult.ride);
+      const result = completeRide(ride);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -257,39 +108,9 @@ describe("Ride", () => {
     });
 
     it("cannot assign a driver to a ride that is already in progress", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createRideInState("in_progress");
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const assignedResult = assignDriver(rideResult.ride, "driver-456");
-      if (!assignedResult.success) {
-        throw new Error("Failed to assign driver");
-      }
-
-      const enRouteResult = startPickup(assignedResult.ride);
-      if (!enRouteResult.success) {
-        throw new Error("Failed to start pickup");
-      }
-
-      const inProgressResult = startRide(enRouteResult.ride);
-      if (!inProgressResult.success) {
-        throw new Error("Failed to start ride");
-      }
-
-      const result = assignDriver(inProgressResult.ride, "driver-789");
+      const result = assignDriver(ride, "driver-789");
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -298,24 +119,9 @@ describe("Ride", () => {
     });
 
     it("cannot start pickup for a ride that is still requested", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const result = startPickup(rideResult.ride);
+      const result = startPickup(ride);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -324,24 +130,9 @@ describe("Ride", () => {
     });
 
     it("cannot start a ride that is not en route to pickup", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createTestRide();
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const result = startRide(rideResult.ride);
+      const result = startRide(ride);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -350,44 +141,9 @@ describe("Ride", () => {
     });
 
     it("cannot cancel a ride that is already completed", () => {
-      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
-      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+      const ride = createRideInState("completed");
 
-      if (!pickupResult.success || !dropoffResult.success) {
-        throw new Error("Invalid test locations");
-      }
-
-      const rideResult = createRide({
-        riderId: "rider-123",
-        pickup: pickupResult.location,
-        dropoff: dropoffResult.location,
-      });
-
-      if (!rideResult.success) {
-        throw new Error("Failed to create ride");
-      }
-
-      const assignedResult = assignDriver(rideResult.ride, "driver-456");
-      if (!assignedResult.success) {
-        throw new Error("Failed to assign driver");
-      }
-
-      const enRouteResult = startPickup(assignedResult.ride);
-      if (!enRouteResult.success) {
-        throw new Error("Failed to start pickup");
-      }
-
-      const inProgressResult = startRide(enRouteResult.ride);
-      if (!inProgressResult.success) {
-        throw new Error("Failed to start ride");
-      }
-
-      const completedResult = completeRide(inProgressResult.ride);
-      if (!completedResult.success) {
-        throw new Error("Failed to complete ride");
-      }
-
-      const result = cancelRide(completedResult.ride);
+      const result = cancelRide(ride);
 
       expect(result.success).toBe(false);
       if (!result.success) {

@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  createLocation,
-  calculateDistanceKm,
-  type Location,
-} from "./location.js";
+import { createLocation, calculateDistanceKm } from "./location.js";
+import { createValidLocation } from "./test-factories.js";
 
 describe("Location", () => {
   describe("createLocation", () => {
@@ -67,12 +64,6 @@ describe("Location", () => {
   });
 
   describe("calculateDistanceKm", () => {
-    const createValidLocation = (lat: number, lng: number): Location => {
-      const result = createLocation({ latitude: lat, longitude: lng });
-      if (!result.success) throw new Error("Invalid test location");
-      return result.location;
-    };
-
     it("returns 0 for same location", () => {
       const location = createValidLocation(37.7749, -122.4194);
 
