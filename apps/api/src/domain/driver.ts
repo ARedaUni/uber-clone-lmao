@@ -1,12 +1,13 @@
 import type { Location } from "./location.js";
 
-export type DriverStatus = "available" | "offline";
+export type DriverStatus = "available" | "offline" | "busy";
 
 export type Driver = {
   readonly id: string;
   readonly name: string;
   readonly location: Location;
   readonly status: DriverStatus;
+  readonly currentRideId?: string;
 };
 
 type CreateDriverInput = {
@@ -54,6 +55,17 @@ export const goOnline = (driver: Driver): DriverOperationResult => {
     driver: {
       ...driver,
       status: "available",
+    },
+  };
+};
+
+export const assignToRide = (driver: Driver, rideId: string): DriverOperationResult => {
+  return {
+    success: true,
+    driver: {
+      ...driver,
+      status: "busy",
+      currentRideId: rideId,
     },
   };
 };
