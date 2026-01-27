@@ -22,7 +22,12 @@ type RideOperationSuccess = {
   readonly ride: Ride;
 };
 
-type RideOperationResult = RideOperationSuccess;
+type RideOperationFailure = {
+  readonly success: false;
+  readonly error: string;
+};
+
+type RideOperationResult = RideOperationSuccess | RideOperationFailure;
 
 export const createRide = (input: CreateRideInput): RideOperationResult => {
   return {
@@ -69,6 +74,13 @@ export const startRide = (ride: Ride): RideOperationResult => {
 };
 
 export const completeRide = (ride: Ride): RideOperationResult => {
+  if (ride.status !== "in_progress") {
+    return {
+      success: false,
+      error: "Cannot complete a ride that is not in progress",
+    };
+  }
+
   return {
     success: true,
     ride: {

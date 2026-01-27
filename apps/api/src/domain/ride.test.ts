@@ -228,4 +228,32 @@ describe("Ride", () => {
       }
     });
   });
+
+  describe("invalid state transitions", () => {
+    it("cannot complete a ride that is still requested", () => {
+      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
+      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+
+      if (!pickupResult.success || !dropoffResult.success) {
+        throw new Error("Invalid test locations");
+      }
+
+      const rideResult = createRide({
+        riderId: "rider-123",
+        pickup: pickupResult.location,
+        dropoff: dropoffResult.location,
+      });
+
+      if (!rideResult.success) {
+        throw new Error("Failed to create ride");
+      }
+
+      const result = completeRide(rideResult.ride);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Cannot complete a ride that is not in progress");
+      }
+    });
+  });
 });
