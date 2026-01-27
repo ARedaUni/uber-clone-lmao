@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDriver } from "./driver.js";
+import { createDriver, goOffline } from "./driver.js";
 import { createValidLocation } from "./test-factories.js";
 
 describe("Driver", () => {
@@ -30,6 +30,21 @@ describe("Driver", () => {
       expect(result1.driver.id).toBeDefined();
       expect(result2.driver.id).toBeDefined();
       expect(result1.driver.id).not.toBe(result2.driver.id);
+    });
+  });
+
+  describe("goOffline", () => {
+    it("transitions an available driver to offline status", () => {
+      const location = createValidLocation(37.7749, -122.4194);
+      const createResult = createDriver({ name: "John Doe", location });
+      if (!createResult.success) throw new Error("Failed to create driver");
+
+      const result = goOffline(createResult.driver);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.driver.status).toBe("offline");
+      }
     });
   });
 });

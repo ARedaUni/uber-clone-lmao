@@ -1,6 +1,6 @@
 import type { Location } from "./location.js";
 
-export type DriverStatus = "available";
+export type DriverStatus = "available" | "offline";
 
 export type Driver = {
   readonly id: string;
@@ -14,19 +14,19 @@ type CreateDriverInput = {
   readonly location: Location;
 };
 
-type CreateDriverSuccess = {
+type DriverOperationSuccess = {
   readonly success: true;
   readonly driver: Driver;
 };
 
-type CreateDriverFailure = {
+type DriverOperationFailure = {
   readonly success: false;
   readonly error: string;
 };
 
-type CreateDriverResult = CreateDriverSuccess | CreateDriverFailure;
+type DriverOperationResult = DriverOperationSuccess | DriverOperationFailure;
 
-export const createDriver = (input: CreateDriverInput): CreateDriverResult => {
+export const createDriver = (input: CreateDriverInput): DriverOperationResult => {
   return {
     success: true,
     driver: {
@@ -34,6 +34,16 @@ export const createDriver = (input: CreateDriverInput): CreateDriverResult => {
       name: input.name,
       location: input.location,
       status: "available",
+    },
+  };
+};
+
+export const goOffline = (driver: Driver): DriverOperationResult => {
+  return {
+    success: true,
+    driver: {
+      ...driver,
+      status: "offline",
     },
   };
 };
