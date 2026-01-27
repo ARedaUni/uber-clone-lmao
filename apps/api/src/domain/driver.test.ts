@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDriver, goOffline, goOnline, assignToRide, completeRide } from "./driver.js";
+import { createDriver, goOffline, goOnline, assignToRide, completeRide, updateLocation } from "./driver.js";
 import { createValidLocation } from "./test-factories.js";
 
 describe("Driver", () => {
@@ -95,6 +95,22 @@ describe("Driver", () => {
       if (result.success) {
         expect(result.driver.status).toBe("available");
         expect(result.driver.currentRideId).toBeUndefined();
+      }
+    });
+  });
+
+  describe("updateLocation", () => {
+    it("updates the driver location", () => {
+      const initialLocation = createValidLocation(37.7749, -122.4194);
+      const newLocation = createValidLocation(37.7849, -122.4094);
+      const createResult = createDriver({ name: "John Doe", location: initialLocation });
+      if (!createResult.success) throw new Error("Failed to create driver");
+
+      const result = updateLocation(createResult.driver, newLocation);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.driver.location).toEqual(newLocation);
       }
     });
   });

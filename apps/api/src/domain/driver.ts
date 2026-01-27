@@ -80,3 +80,13 @@ export const completeRide = (driver: Driver): DriverOperationResult => {
     },
   };
 };
+
+export const updateLocation = (driver: Driver, location: Location): DriverOperationResult => {
+  return {
+    success: true,
+    driver: {
+      ...driver,
+      location,
+    },
+  };
+};
