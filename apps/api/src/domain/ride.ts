@@ -1,6 +1,6 @@
 import type { Location } from "./location.js";
 
-export type RideStatus = "requested";
+export type RideStatus = "requested" | "driver_assigned";
 
 export type Ride = {
   readonly id: string;
@@ -8,6 +8,7 @@ export type Ride = {
   readonly pickup: Location;
   readonly dropoff: Location;
   readonly status: RideStatus;
+  readonly driverId?: string;
 };
 
 type CreateRideInput = {
@@ -32,6 +33,24 @@ export const createRide = (input: CreateRideInput): CreateRideResult => {
       pickup: input.pickup,
       dropoff: input.dropoff,
       status: "requested",
+    },
+  };
+};
+
+type AssignDriverSuccess = {
+  readonly success: true;
+  readonly ride: Ride;
+};
+
+type AssignDriverResult = AssignDriverSuccess;
+
+export const assignDriver = (ride: Ride, driverId: string): AssignDriverResult => {
+  return {
+    success: true,
+    ride: {
+      ...ride,
+      status: "driver_assigned",
+      driverId,
     },
   };
 };

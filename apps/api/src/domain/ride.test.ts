@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRide } from "./ride.js";
+import { createRide, assignDriver } from "./ride.js";
 import { createLocation } from "./location.js";
 
 describe("Ride", () => {
@@ -54,6 +54,35 @@ describe("Ride", () => {
       expect(result1.ride.id).toBeDefined();
       expect(result2.ride.id).toBeDefined();
       expect(result1.ride.id).not.toBe(result2.ride.id);
+    });
+  });
+
+  describe("assignDriver", () => {
+    it("transitions a requested ride to driver_assigned status", () => {
+      const pickupResult = createLocation({ latitude: 37.7749, longitude: -122.4194 });
+      const dropoffResult = createLocation({ latitude: 34.0522, longitude: -118.2437 });
+
+      if (!pickupResult.success || !dropoffResult.success) {
+        throw new Error("Invalid test locations");
+      }
+
+      const rideResult = createRide({
+        riderId: "rider-123",
+        pickup: pickupResult.location,
+        dropoff: dropoffResult.location,
+      });
+
+      if (!rideResult.success) {
+        throw new Error("Failed to create ride");
+      }
+
+      const result = assignDriver(rideResult.ride, "driver-456");
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.ride.status).toBe("driver_assigned");
+        expect(result.ride.driverId).toBe("driver-456");
+      }
     });
   });
 });
