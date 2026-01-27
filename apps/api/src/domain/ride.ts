@@ -61,6 +61,13 @@ export const assignDriver = (ride: Ride, driverId: string): RideOperationResult 
 };
 
 export const startPickup = (ride: Ride): RideOperationResult => {
+  if (ride.status !== "driver_assigned") {
+    return {
+      success: false,
+      error: "Cannot start pickup for a ride without an assigned driver",
+    };
+  }
+
   return {
     success: true,
     ride: {
