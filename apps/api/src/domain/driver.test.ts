@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createDriver, goOffline, goOnline, assignToRide, completeRide, updateLocation } from "./driver.js";
-import { createValidLocation } from "./test-factories.js";
+import { createValidLocation, createTestDriver, createDriverInState } from "./test-factories.js";
 
 describe("Driver", () => {
   describe("createDriver", () => {
@@ -18,28 +18,20 @@ describe("Driver", () => {
     });
 
     it("generates a unique id for each driver", () => {
-      const location = createValidLocation(37.7749, -122.4194);
+      const driver1 = createTestDriver({ name: "John Doe" });
+      const driver2 = createTestDriver({ name: "Jane Doe" });
 
-      const result1 = createDriver({ name: "John Doe", location });
-      const result2 = createDriver({ name: "Jane Doe", location });
-
-      if (!result1.success || !result2.success) {
-        throw new Error("Failed to create drivers");
-      }
-
-      expect(result1.driver.id).toBeDefined();
-      expect(result2.driver.id).toBeDefined();
-      expect(result1.driver.id).not.toBe(result2.driver.id);
+      expect(driver1.id).toBeDefined();
+      expect(driver2.id).toBeDefined();
+      expect(driver1.id).not.toBe(driver2.id);
     });
   });
 
   describe("goOffline", () => {
     it("transitions an available driver to offline status", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
+      const driver = createTestDriver();
 
-      const result = goOffline(createResult.driver);
+      const result = goOffline(driver);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -50,13 +42,9 @@ describe("Driver", () => {
 
   describe("goOnline", () => {
     it("transitions an offline driver to available status", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
-      const offlineResult = goOffline(createResult.driver);
-      if (!offlineResult.success) throw new Error("Failed to go offline");
+      const driver = createDriverInState("offline");
 
-      const result = goOnline(offlineResult.driver);
+      const result = goOnline(driver);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -67,11 +55,9 @@ describe("Driver", () => {
 
   describe("assignToRide", () => {
     it("transitions an available driver to busy status", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
+      const driver = createTestDriver();
 
-      const result = assignToRide(createResult.driver, "ride-123");
+      const result = assignToRide(driver, "ride-123");
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -83,13 +69,9 @@ describe("Driver", () => {
 
   describe("completeRide", () => {
     it("transitions a busy driver to available status and clears currentRideId", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
-      const assignedResult = assignToRide(createResult.driver, "ride-123");
-      if (!assignedResult.success) throw new Error("Failed to assign to ride");
+      const driver = createDriverInState("busy");
 
-      const result = completeRide(assignedResult.driver);
+      const result = completeRide(driver);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -101,12 +83,10 @@ describe("Driver", () => {
 
   describe("updateLocation", () => {
     it("updates the driver location", () => {
-      const initialLocation = createValidLocation(37.7749, -122.4194);
+      const driver = createTestDriver();
       const newLocation = createValidLocation(37.7849, -122.4094);
-      const createResult = createDriver({ name: "John Doe", location: initialLocation });
-      if (!createResult.success) throw new Error("Failed to create driver");
 
-      const result = updateLocation(createResult.driver, newLocation);
+      const result = updateLocation(driver, newLocation);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -117,13 +97,9 @@ describe("Driver", () => {
 
   describe("invalid state transitions", () => {
     it("cannot assign to ride if driver is offline", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
-      const offlineResult = goOffline(createResult.driver);
-      if (!offlineResult.success) throw new Error("Failed to go offline");
+      const driver = createDriverInState("offline");
 
-      const result = assignToRide(offlineResult.driver, "ride-123");
+      const result = assignToRide(driver, "ride-123");
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -132,13 +108,9 @@ describe("Driver", () => {
     });
 
     it("cannot go offline if driver is busy", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
-      const assignedResult = assignToRide(createResult.driver, "ride-123");
-      if (!assignedResult.success) throw new Error("Failed to assign to ride");
+      const driver = createDriverInState("busy");
 
-      const result = goOffline(assignedResult.driver);
+      const result = goOffline(driver);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -147,11 +119,9 @@ describe("Driver", () => {
     });
 
     it("cannot complete ride if driver is not busy", () => {
-      const location = createValidLocation(37.7749, -122.4194);
-      const createResult = createDriver({ name: "John Doe", location });
-      if (!createResult.success) throw new Error("Failed to create driver");
+      const driver = createTestDriver();
 
-      const result = completeRide(createResult.driver);
+      const result = completeRide(driver);
 
       expect(result.success).toBe(false);
       if (!result.success) {

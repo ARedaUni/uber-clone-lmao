@@ -8,6 +8,13 @@ import {
   type Ride,
   type RideStatus,
 } from "./ride.js";
+import {
+  createDriver,
+  goOffline,
+  assignToRide,
+  type Driver,
+  type DriverStatus,
+} from "./driver.js";
 
 export const createValidLocation = (latitude: number, longitude: number): Location => {
   const result = createLocation({ latitude, longitude });
@@ -68,4 +75,48 @@ export const createRideInState = (
   if (status === "completed") return completed.ride;
 
   throw new Error(`Cannot create ride in state: ${status}`);
+};
+
+type CreateTestDriverOptions = {
+  readonly name?: string;
+  readonly location?: Location;
+};
+
+export const createTestDriver = (options: CreateTestDriverOptions = {}): Driver => {
+  const name = options.name ?? "John Doe";
+  const location = options.location ?? createValidLocation(37.7749, -122.4194);
+
+  const result = createDriver({ name, location });
+  if (!result.success) {
+    throw new Error("Failed to create test driver");
+  }
+  return result.driver;
+};
+
+type CreateDriverInStateOptions = CreateTestDriverOptions & {
+  readonly rideId?: string;
+};
+
+export const createDriverInState = (
+  status: DriverStatus,
+  options: CreateDriverInStateOptions = {}
+): Driver => {
+  const rideId = options.rideId ?? "ride-123";
+  let driver = createTestDriver(options);
+
+  if (status === "available") return driver;
+
+  if (status === "offline") {
+    const offline = goOffline(driver);
+    if (!offline.success) throw new Error("Failed to go offline");
+    return offline.driver;
+  }
+
+  if (status === "busy") {
+    const assigned = assignToRide(driver, rideId);
+    if (!assigned.success) throw new Error("Failed to assign to ride");
+    return assigned.driver;
+  }
+
+  throw new Error(`Cannot create driver in state: ${status}`);
 };
