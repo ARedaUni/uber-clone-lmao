@@ -98,13 +98,72 @@ Manual AWS Console  →  Terraform or AWS CDK
 
 ### Phase 3: Observability (Critical for Microservices)
 
-| Pillar | Tool Options | AWS Native |
-|--------|--------------|------------|
-| **Logs** | ELK Stack, Loki | CloudWatch Logs |
-| **Metrics** | Prometheus + Grafana | CloudWatch Metrics |
-| **Traces** | Jaeger, Zipkin | X-Ray |
+**Why essential:** When a ride request fails across 4 services, you need distributed tracing to debug it. Observability must be in place **before** decomposing into microservices — you can't debug what you can't see.
 
-**Why essential:** When a ride request fails across 4 services, you need distributed tracing to debug it.
+**Standard:** OpenTelemetry (CNCF-graduated, vendor-neutral). Instrument once, export to any backend.
+
+#### The Three Pillars
+
+| Pillar | What It Answers | Self-Hosted Tool | AWS Native |
+|--------|----------------|------------------|------------|
+| **Traces** | "What happened during this request?" | Grafana Tempo | X-Ray |
+| **Metrics** | "How is the system performing?" | Prometheus + Grafana | CloudWatch Metrics |
+| **Logs** | "What specifically happened at this moment?" | Grafana Loki | CloudWatch Logs |
+
+#### Architecture: OTel Collector as Central Hub
+
+```
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Ride Svc │  │Driver Svc│  │Notif Svc │   ← services (OTel SDK)
+└────┬─────┘  └────┬─────┘  └────┬─────┘
+     │    OTLP/gRPC (4317)       │
+     ▼              ▼            ▼
+┌──────────────────────────────────────┐
+│        OpenTelemetry Collector       │   ← receives, processes, exports
+└──┬────────────┬────────────┬─────────┘
+   ▼            ▼            ▼
+ Tempo      Prometheus     Loki           ← storage backends
+(traces)    (metrics)      (logs)
+   └────────────┼────────────┘
+                ▼
+             Grafana                      ← single pane of glass
+```
+
+**Key insight:** This architecture is identical whether you run 1 service or 20. The OTel SDK in each service exports via OTLP to the Collector. Context propagation across service boundaries happens automatically via W3C `traceparent` HTTP headers.
+
+#### Implementation Steps
+
+| Step | What | Concepts Learned |
+|------|------|-----------------|
+| 3a | Structured logging (pino) | JSON logs, log levels, request correlation |
+| 3b | OTel SDK + auto-instrumentation | Trace context, spans, auto-instrumented HTTP/DB/Redis |
+| 3c | OTel Collector in Docker Compose | Telemetry pipelines: receivers → processors → exporters |
+| 3d | Tempo + Grafana | Distributed trace visualization, TraceQL |
+| 3e | Prometheus + Grafana | Pull-based metrics, PromQL, RED metrics (Rate/Errors/Duration) |
+| 3f | Loki + Grafana | Centralized logs, LogQL, trace-to-log correlation |
+| 3g | Custom business spans + metrics | Ride lifecycle spans, driver match histograms, fare counters |
+| 3h | Tail-based sampling | Only retain interesting traces (errors, slow requests) at scale |
+
+#### What Survives the Monolith → Microservices Transition
+
+| Concern | Monolith | Microservices | Code Change Required |
+|---------|----------|---------------|---------------------|
+| Traces | Spans in one process | Spans across processes | None — OTel propagates via headers |
+| Logs | One log stream | N log streams | None — Loki correlates by trace ID |
+| Metrics | One `/metrics` endpoint | N endpoints | None — Prometheus scrapes all |
+| Collector | Optional | Essential (fan-in) | Config change only |
+
+#### Observability Stack Resources (All Self-Hosted)
+
+| Component | RAM | Purpose |
+|-----------|-----|---------|
+| OTel Collector | ~50MB | Central telemetry pipeline |
+| Grafana Tempo | ~100MB | Trace storage + querying |
+| Prometheus | ~200MB | Metrics scraping + storage |
+| Grafana Loki | ~100MB | Log aggregation |
+| Grafana | ~100MB | Unified dashboards |
+
+Total: ~550MB — runs on a laptop alongside Postgres + Redis.
 
 ### Phase 4: Advanced CI/CD
 
