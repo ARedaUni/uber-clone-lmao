@@ -149,4 +149,90 @@ describe("ride lifecycle service", () => {
       }
     });
   });
+
+  describe("completeRide", () => {
+    it("transitions ride to completed and frees the driver", async () => {
+      const driverId = "driver-1";
+      const ride = createRideInState("in_progress", { driverId });
+      const driver = createDriverInState("busy", {
+        name: "Jane",
+        rideId: ride.id,
+      });
+
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository(driver);
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.completeRide(ride.id);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.ride.status).toBe("completed");
+      }
+      expect(rideRepository.saved).toHaveLength(1);
+      expect(rideRepository.saved[0]!.status).toBe("completed");
+      expect(driverRepository.saved).toHaveLength(1);
+      expect(driverRepository.saved[0]!.status).toBe("available");
+      expect(driverRepository.saved[0]!.currentRideId).toBeUndefined();
+    });
+
+    it("returns failure when ride is not found", async () => {
+      const rideRepository = createFakeRideRepository(undefined);
+      const driverRepository = createFakeDriverRepository();
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.completeRide("nonexistent-ride");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Ride not found");
+      }
+    });
+
+    it("returns failure when ride is not in progress", async () => {
+      const ride = createRideInState("requested");
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository();
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.completeRide(ride.id);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe(
+          "Cannot complete a ride that is not in progress",
+        );
+      }
+    });
+
+    it("returns failure when assigned driver is not found", async () => {
+      const ride = createRideInState("in_progress", { driverId: "driver-1" });
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository(undefined);
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.completeRide(ride.id);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Driver not found");
+      }
+    });
+  });
 });
