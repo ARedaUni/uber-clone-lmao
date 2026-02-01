@@ -230,6 +230,7 @@ Enhanced Pipeline:
 | 6. Matching + locks | + Distributed locking with Redlock, circuit breakers |
 | 7. Request queue | + Replace BullMQ with SQS/EventBridge, learn managed queues |
 | 8. Accept/decline | + Observability stack, distributed tracing for full flow |
+| **9. Observability** | **+ OTel SDK, pino logging, Collector, LGTM stack (Loki/Grafana/Tempo/Mimir)** |
 
 ---
 
@@ -276,7 +277,12 @@ Enhanced Pipeline:
 - [Chris Richardson - Microservices Patterns](https://microservices.io/book)
 
 ### Observability
-- [OpenTelemetry](https://opentelemetry.io/)
+- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
+- [OpenTelemetry JS SDK](https://opentelemetry.io/docs/languages/js/)
+- [Grafana Tempo](https://grafana.com/docs/tempo/latest/)
+- [Grafana Loki](https://grafana.com/docs/loki/latest/)
+- [Prometheus](https://prometheus.io/docs/)
+- [Pino Logger](https://getpino.io/)
 - [AWS X-Ray](https://docs.aws.amazon.com/xray/)
 
 ### Resilience
