@@ -235,4 +235,92 @@ describe("ride lifecycle service", () => {
       }
     });
   });
+
+  describe("cancelRide", () => {
+    it("cancels ride and frees the assigned driver", async () => {
+      const driverId = "driver-1";
+      const ride = createRideInState("in_progress", { driverId });
+      const driver = createDriverInState("busy", {
+        name: "Jane",
+        rideId: ride.id,
+      });
+
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository(driver);
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.cancelRide(ride.id);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.ride.status).toBe("cancelled");
+      }
+      expect(rideRepository.saved).toHaveLength(1);
+      expect(rideRepository.saved[0]!.status).toBe("cancelled");
+      expect(driverRepository.saved).toHaveLength(1);
+      expect(driverRepository.saved[0]!.status).toBe("available");
+      expect(driverRepository.saved[0]!.currentRideId).toBeUndefined();
+    });
+
+    it("cancels ride without touching driver when none is assigned", async () => {
+      const ride = createRideInState("requested");
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository();
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.cancelRide(ride.id);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.ride.status).toBe("cancelled");
+      }
+      expect(rideRepository.saved).toHaveLength(1);
+      expect(driverRepository.saved).toHaveLength(0);
+    });
+
+    it("returns failure when ride is not found", async () => {
+      const rideRepository = createFakeRideRepository(undefined);
+      const driverRepository = createFakeDriverRepository();
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.cancelRide("nonexistent-ride");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Ride not found");
+      }
+    });
+
+    it("returns failure when ride is already completed", async () => {
+      const ride = createRideInState("completed");
+      const rideRepository = createFakeRideRepository(ride);
+      const driverRepository = createFakeDriverRepository();
+
+      const service = createRideLifecycleService({
+        rideRepository,
+        driverRepository,
+      });
+
+      const result = await service.cancelRide(ride.id);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe(
+          "Cannot cancel a ride that is already completed or cancelled",
+        );
+      }
+    });
+  });
 });

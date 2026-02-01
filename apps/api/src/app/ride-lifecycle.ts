@@ -2,6 +2,7 @@ import {
   startPickup as startPickupDomain,
   startRide as startRideDomain,
   completeRide as completeRideDomain,
+  cancelRide as cancelRideDomain,
 } from "../domain/ride.js";
 import { completeRide as completeDriverRide } from "../domain/driver.js";
 import type { RideLifecycle } from "../ports/inbound/ride-lifecycle.js";
@@ -76,7 +77,29 @@ export const createRideLifecycleService = (
     return { success: true, ride: rideResult.ride };
   },
 
-  cancelRide: async () => {
-    return { success: false, error: "Not implemented" };
+  cancelRide: async (rideId) => {
+    const ride = await deps.rideRepository.findById(rideId);
+    if (!ride) {
+      return { success: false, error: "Ride not found" };
+    }
+
+    const rideResult = cancelRideDomain(ride);
+    if (!rideResult.success) {
+      return { success: false, error: rideResult.error };
+    }
+
+    await deps.rideRepository.save(rideResult.ride);
+
+    if (ride.driverId) {
+      const driver = await deps.driverRepository.findById(ride.driverId);
+      if (driver) {
+        const driverResult = completeDriverRide(driver);
+        if (driverResult.success) {
+          await deps.driverRepository.save(driverResult.driver);
+        }
+      }
+    }
+
+    return { success: true, ride: rideResult.ride };
   },
 });
