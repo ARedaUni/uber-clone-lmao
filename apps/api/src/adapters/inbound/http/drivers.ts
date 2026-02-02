@@ -1,12 +1,7 @@
 import { Hono } from "hono";
-import { z } from "zod";
 import type { DriverManager } from "../../../ports/inbound/driver-manager.js";
 import { createAuthMiddleware, type DriverAuthEnv } from "./middleware/auth.js";
-
-const locationSchema = z.object({
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
-});
+import { locationSchema } from "./schemas.js";
 
 type DriversRouterDeps = {
   readonly driverManager: DriverManager;
